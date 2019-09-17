@@ -12,11 +12,15 @@ A CLI to generate and store session credentials in ~/.aws/credentials file, base
 
 ## Setup dev environment
 
+#### Install Dev Dependencies
+`pip3 install -r requirements.txt`
+`pip3 install -r requirements-dev.txt`
+
 #### Create Package
 `python3 setup.py sdist bdist_wheel`
 
 #### Local Install
-`pip3 install --force-reinstall --no-deps dist/python_sandbox-0.1.0-py3-none-any.whl`
+`pip3 install --force-reinstall --no-deps dist/aws_session-*-py3-none-any.whl`
 
 #### Deploy to PiPy
 `twine upload dist/*`

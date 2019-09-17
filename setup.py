@@ -1,8 +1,12 @@
 import setuptools
 import sys
-from os import path
-from pathlib import Path
-__directory__=path.dirname(path.realpath(__file__))
+import os
+__directory__=os.path.dirname(os.path.realpath(__file__))
+os.chdir(__directory__)
+
+def read_text(file_name):
+    with open(file_name) as file:
+        return file.read()
 
 setuptools.setup(
     name='aws-session',
@@ -10,7 +14,7 @@ setuptools.setup(
     author="Bengt Brodersen",
     author_email="qoo@qoomon.me",
     description="A CLI to generate and store session credentials in ~/.aws/credentials file, based on ~/.aws/config profiles",
-    long_description=Path(path.join(__directory__, "README.md")).read_text(),
+    long_description=read_text("README.md"),
     long_description_content_type="text/markdown",
     url="https://github.com/qoomon/aws-session",
     classifiers=[
