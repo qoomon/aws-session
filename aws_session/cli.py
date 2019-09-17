@@ -1,5 +1,6 @@
 from os import (path, environ)
 import sys
+from argparse import ArgumentParser
 from configparser import ConfigParser
 
 from botocore.credentials import JSONFileCache
@@ -35,9 +36,11 @@ def print_help():
     print("""\
 usage: 
 
-    refresh session credentials:
+    set session credentials:
 
-        aws-session refresh <profile_name>
+        aws-session set [--profile/-p <profile_name>]
+        
+            --profile/-p <profile_name> : select profile to use else 'default'
         
     list session profiles:
 
@@ -49,8 +52,20 @@ usage:
 
 """)
 
+def handle_help(args):
+    print_help()
 
-def refresh_session_credentials(profile_name):
+
+def handle_list_session_profiles(args):
+    profile_map = Session().full_config['profiles']
+    for profile_name, profile in profile_map.items():
+        if profile.get('role_arn'):
+            print(profile_name)
+
+
+def handle_get_session_credentials(args):
+    profile_name = args.profile_name or 'default'
+    
     profile_map = Session().full_config['profiles']
     # ensure profile exists
     if profile_name not in profile_map:
@@ -63,7 +78,7 @@ def refresh_session_credentials(profile_name):
     session = Session(profile=profile_name)
 
     # setup credentials cache - use aws cli credentials cache
-    session.get_component('credential_provider'.get_provider('assume-role')\
+    session.get_component('credential_provider').get_provider('assume-role')\
         .cache = JSONFileCache(aws_cache_dir)
 
     # get session credentials
@@ -81,31 +96,24 @@ def refresh_session_credentials(profile_name):
     })
 
 
-def handle_list_session_profiles():
-    profile_map = Session().full_config['profiles']
-    for profile_name, profile in profile_map.items():
-        if profile.get('role_arn'):
-            print(profile_name)
-
-
-def handle_refresh_profile_credentials():
-    profile_name = argv_get(2) \
-        or environ.get('AWS_PROFILE') \
-        or environ.get('AWS_DEFAULT_PROFILE') \
-        or 'default'
-    refresh_session_credentials(profile_name)
-
-
 def main():
-    if argv_get(1) == 'help':
-        print_help()
-    elif argv_get(1) == 'list':
-        handle_list_session_profiles()
-    elif argv_get(1) == 'refresh':
-        handle_refresh_profile_credentials()
-    else:
-        printHelp()
-        exit(1)
+    parser = ArgumentParser(add_help=False)
+
+    parser_command = parser.add_subparsers(title='commands',dest='command',required=True)
+
+    parser_command_help = parser_command.add_parser('help', help="Print help")
+    parser_command_help.set_defaults(func=handle_help)
+
+    parser_command_list = parser_command.add_parser('list', help="List session profiles")
+    parser_command_list.set_defaults(func=handle_list_session_profiles)
+
+    parser_command_set = parser_command.add_parser('set', help="Set session credentials")
+    parser_command_set.add_argument('-p', '--profile', dest='profile_name', help='Profile name')
+    parser_command_set.add_argument('--force', action='store_true', dest='force_refresh', help='Force session credentials refresh')
+    parser_command_set.set_defaults(func=handle_get_session_credentials)
+
+    args = parser.parse_args()
+    args.func(args)
 
 
 if __name__ == "__main__":

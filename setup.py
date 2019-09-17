@@ -10,7 +10,7 @@ def read_text(file_name):
 
 setuptools.setup(
     name='aws-session',
-    version='1.0.0',
+    version='1.1.0',
     author="Bengt Brodersen",
     author_email="me@qoomon.me",
     description="A CLI to generate and store session credentials in ~/.aws/credentials file, based on ~/.aws/config profiles",
