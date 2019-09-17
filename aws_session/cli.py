@@ -1,28 +1,37 @@
-from os import ( path, environ )
+from os import (path, environ)
 import sys
+from configparser import ConfigParser
+
 from botocore.credentials import JSONFileCache
 from botocore.session import Session
 from botocore.exceptions import NoCredentialsError, ProfileNotFound
 from awscli.customizations.configure.writer import ConfigFileWriter
 
+
 def argv_get(index):
     return sys.argv[index] if index < len(sys.argv) else None
 
-def printHelp():
+
+def print_help():
     print("""\
 usage: 
 
     refresh session credentials:
 
-        aws-session <profile_name>
+        aws-session refresh <profile_name>
         
     list session profiles:
 
-        aws-session --list/-l
+        aws-session list
+    
+    print help
+    
+        aws-session help
 
-""" )
+""")
 
-def refreshSessionCredentials(profile_name):
+
+def refresh_session_credentials(profile_name):
     profile_map = Session().full_config['profiles']
     # ensure profile exists
     if profile_name not in profile_map:
@@ -51,6 +60,8 @@ def refreshSessionCredentials(profile_name):
     print(f'[{session.profile}] - set session credentials')
     credentials_path = path.expanduser(
         session.get_config_variable('credentials_file'))
+
+    config_section=session.profile
     
     # add empty line as profile separator
     current_credentials = ConfigParser()
@@ -58,31 +69,36 @@ def refreshSessionCredentials(profile_name):
     if current_credentials.sections() and config_section not in current_credentials.sections():
         with open(credentials_path, 'a') as credentials_file:
             credentials_file.write('\n')
-                
+
     ConfigFileWriter().update_config({
-        '__section__': session.profile,
+        '__section__': config_section,
         'aws_access_key_id': session_credentials.access_key,
         'aws_secret_access_key': session_credentials.secret_key,
         'aws_session_token': session_credentials.token
     }, credentials_path)
 
-def printSessionProfiles():
+
+def list_session_profiles():
     profile_map = Session().full_config['profiles']
     for profile_name, profile in profile_map.items():
         if profile.get('role_arn'):
             print(profile_name)
 
+
 def main():
-    if argv_get(1) in ('--help', '-h')  :
-        printHelp()
-    elif argv_get(1) in ('--list', '-l') :
-        printSessionProfiles()
-    else:
-        profile_name = argv_get(1) \
+    if argv_get(1) == 'help':
+        print_help()
+    elif argv_get(1) == 'list':
+        list_session_profiles()
+    elif argv_get(1) == 'refresh':
+        profile_name = argv_get(2) \
             or environ.get('AWS_PROFILE') \
             or environ.get('AWS_DEFAULT_PROFILE') \
             or 'default'
-        refreshSessionCredentials(profile_name)
-  
-if __name__== "__main__":
-  main()
+        refresh_session_credentials(profile_name)
+    else:
+        printHelp()
+        exit(1)
+
+if __name__ == "__main__":
+    main()

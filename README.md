@@ -1,13 +1,14 @@
 # aws-session
 
-A CLI to generate and store session credentials in ~/.aws/credentials file, based on ~/.aws/config profiles
+A CLI to generate and store session credentials in `~/.aws/credentials` file, based on `~/.aws/config profiles`
+
 
 ## Usage
 
-* list all session profiles `aws-session -l`
+* list all session profiles `aws-session list`
 * refresh session credentials for specific profile
-  * by cli parameter `aws-session <PROFILE_NAME>`
-  * by environment variable `export AWS_PROFILE=<PROFILE_NAME>; aws-session`
+  * by cli parameter `aws-session refresh <PROFILE_NAME>`
+  * by environment variable `export AWS_PROFILE=<PROFILE_NAME>; aws-session refresh`
 
 
 ## Setup dev environment
