@@ -1,7 +1,8 @@
 # aws-session
 
-A CLI to generate and store session credentials in `~/.aws/credentials` file, based on `~/.aws/config profiles`
+![PyPI](https://img.shields.io/pypi/v/aws-session)
 
+A CLI to generate and store session credentials in `~/.aws/credentials` file, based on `~/.aws/config profiles
 
 ## Usage
 
