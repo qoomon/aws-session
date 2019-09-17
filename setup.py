@@ -12,7 +12,7 @@ setuptools.setup(
     name='aws-session',
     version='0.1.0',
     author="Bengt Brodersen",
-    author_email="qoo@qoomon.me",
+    author_email="me@qoomon.me",
     description="A CLI to generate and store session credentials in ~/.aws/credentials file, based on ~/.aws/config profiles",
     long_description=read_text("README.md"),
     long_description_content_type="text/markdown",

@@ -49,14 +49,22 @@ def refreshSessionCredentials(profile_name):
 
     # write session credentials to credentials file
     print(f'[{session.profile}] - set session credentials')
-    credentials_filename = path.expanduser(
+    credentials_path = path.expanduser(
         session.get_config_variable('credentials_file'))
+    
+    # add empty line as profile separator
+    current_credentials = ConfigParser()
+    current_credentials.read(credentials_path)
+    if current_credentials.sections() and config_section not in current_credentials.sections():
+        with open(credentials_path, 'a') as credentials_file:
+            credentials_file.write('\n')
+                
     ConfigFileWriter().update_config({
         '__section__': session.profile,
         'aws_access_key_id': session_credentials.access_key,
         'aws_secret_access_key': session_credentials.secret_key,
         'aws_session_token': session_credentials.token
-    }, credentials_filename)
+    }, credentials_path)
 
 def printSessionProfiles():
     profile_map = Session().full_config['profiles']
