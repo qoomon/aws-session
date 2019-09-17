@@ -12,13 +12,13 @@ def printHelp():
     print("""\
 usage: 
 
-refresh session credentials:
+    refresh session credentials:
 
-    aws-session <profile_name>
-    
-list session profiles:
+        aws-session <profile_name>
+        
+    list session profiles:
 
-    aws-session --list/-l
+        aws-session --list/-l
 
 """ )
 
