@@ -52,7 +52,7 @@ def refreshSessionCredentials(profile_name):
     credentials_filename = path.expanduser(
         session.get_config_variable('credentials_file'))
     ConfigFileWriter().update_config({
-        '__section__': 'test-' + session.profile,
+        '__section__': session.profile,
         'aws_access_key_id': session_credentials.access_key,
         'aws_secret_access_key': session_credentials.secret_key,
         'aws_session_token': session_credentials.token
