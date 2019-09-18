@@ -40,14 +40,14 @@ usage:
 
         aws-session set [--profile/-p <profile_name>]
         
-            --profile/-p <profile_name> : select profile to use else 'default'
+            --profile/-p <profile_name> : select profile ['default']
         
     list session profiles:
 
         aws-session list
-    
+
     print help
-    
+
         aws-session help
 
 """)

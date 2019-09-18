@@ -6,9 +6,11 @@ A CLI to generate and store session credentials in `~/.aws/credentials` file, ba
 
 ## Usage
 ```
-refresh session credentials:
+set session credentials:
 
-    aws-session refresh <profile_name>
+    aws-session set [--profile/-p <profile_name>]
+    
+        --profile/-p <profile_name> : select profile ['default']
     
 list session profiles:
 
