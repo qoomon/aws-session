@@ -99,7 +99,8 @@ def handle_get_session_credentials(args):
 def main():
     parser = ArgumentParser(add_help=False)
 
-    parser_command = parser.add_subparsers(title='commands',dest='command',required=True)
+    parser_command = parser.add_subparsers(title='commands',dest='command')
+    parser_command.required = True
 
     parser_command_help = parser_command.add_parser('help', help="Print help")
     parser_command_help.set_defaults(func=handle_help)

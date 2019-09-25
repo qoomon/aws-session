@@ -10,7 +10,7 @@ def read_text(file_name):
 
 setuptools.setup(
     name='aws-session',
-    version='2.0.0',
+    version='2.0.1',
     author="Bengt Brodersen",
     author_email="me@qoomon.me",
     description="A CLI to generate and store session credentials in ~/.aws/credentials file, based on ~/.aws/config profiles",
@@ -22,6 +22,8 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Environment :: Console",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
