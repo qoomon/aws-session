@@ -6,27 +6,30 @@ A CLI to generate and store session credentials in `~/.aws/credentials` file, ba
 
 ## Usage
 ```
-set session credentials:
+usage: 
 
-    aws-session set [--profile/-p <profile_name>]
-    
-        --profile/-p <profile_name> : select profile ['default']
-    
-list session profiles:
+    get session credentials:
 
-    aws-session list
+        aws-session get [--profile/-p <profile_name>]
+        
+            --profile/-p <profile_name> : select profile ['default']
+            --force/-f                  : force new session
+        
+    list session profiles:
 
-print help
+        aws-session list
 
-    aws-session help
+    print help
+
+        aws-session help
 ```
 
 ## Setup dev environment
 
 #### Install Dev Dependencies
-`pip3 install -r requirements.txt`
+`pip3 install --user -r requirements.txt`
 
-`pip3 install -r requirements-dev.txt`
+`pip3 install --user -r requirements-dev.txt`
 
 #### Create Package
 `python3 setup.py sdist bdist_wheel`
