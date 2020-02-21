@@ -21,6 +21,7 @@ AWS_CACHE_DIR = path.expanduser(
 SESSION_EXPIRATION_THRESHOLD = timedelta(minutes=5)        
         
 DEFAULT_SESSION_DURATION = timedelta(hours=12)
+DEFAULT_ROLE_SESSION_DURATION = timedelta(hours=1)
 
 # ------------------------------------------------------------------------------
     
@@ -87,22 +88,32 @@ def handle_session_credentials(args):
 
     session_expiration_duration =  session_expiration  - datetime.now().astimezone()
     if force_new or session_expiration_duration < SESSION_EXPIRATION_THRESHOLD:      
-        session_duration_seconds = profile_properties.get('session_duration_seconds') or int(DEFAULT_SESSION_DURATION.total_seconds())
-        session_mfa_serial = profile_properties.get('session_mfa_serial')
-        
         source_session = Session(profile=session_source_profile)
         source_session_sts_client = source_session.create_client('sts')
         
-        if session_mfa_serial:
-            session_mfa_code = getpass(prompt=f"Enter MFA code for {session_mfa_serial}: ")
-            session = source_session_sts_client.get_session_token(
+        session_duration_seconds = profile_properties.get('session_duration_seconds')
+        
+        session_role_arn = profile_properties.get('session_role_arn')
+        if session_role_arn:
+            session_duration_seconds = session_duration_seconds or int(DEFAULT_ROLE_SESSION_DURATION.total_seconds())
+            session_name = profile_properties.get('session_name') or datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+            session = source_session_sts_client.assume_role(
                 DurationSeconds=session_duration_seconds,
-                SerialNumber=session_mfa_serial,
-                TokenCode=session_mfa_code)
-        else:
-            session = source_session_sts_client.get_session_token(
-                DurationSeconds=session_duration_seconds)
-                
+                RoleArn=session_role_arn, 
+                RoleSessionName=session_name)
+        else: 
+            session_duration_seconds = session_duration_seconds or int(DEFAULT_SESSION_DURATION.total_seconds())
+            session_mfa_serial = profile_properties.get('session_mfa_serial')
+            if session_mfa_serial:
+                session_mfa_code = getpass(prompt=f"Enter MFA code for {session_mfa_serial}: ")
+                session = source_session_sts_client.get_session_token(
+                    DurationSeconds=session_duration_seconds,
+                    SerialNumber=session_mfa_serial,
+                    TokenCode=session_mfa_code)
+            else:
+                session = source_session_sts_client.get_session_token(
+                    DurationSeconds=session_duration_seconds)
+    
         session_access_key_id = session['Credentials']['AccessKeyId']
         session_secret_access_key = session['Credentials']['SecretAccessKey']
         session_token = session['Credentials']['SessionToken']
