@@ -35,7 +35,7 @@ usage:
 `python3 -m aws_session`
 
 #### Create Package
-`python3 setup.py sdist bdist_wheel`
+`python3 setup.py clean --all sdist bdist_wheel` 
 
 #### Local Install
 `pip3 install --force-reinstall --no-deps dist/aws_session-*-py3-none-any.whl`

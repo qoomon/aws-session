@@ -1,4 +1,5 @@
 setuptools
+setupext-janitor
 wheel
 tqdm
 twine
