@@ -31,6 +31,9 @@ usage:
 
 `pip3 install --user -r requirements-dev.txt`
 
+## Run
+`python3 -m aws_session`
+
 #### Create Package
 `python3 setup.py sdist bdist_wheel`
 

@@ -1,6 +1,7 @@
 #
-# Origin: https://github.com/aws/aws-cli/blob/master/awscli/customizations/configure/writer.py
+# Origin: https://github.com/aws/aws-cli/blob/5f6524e51d393a612315745cbeefe481ae2e918d/awscli/customizations/configure/writer.py
 #
+
 # Copyright 2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
@@ -16,8 +17,10 @@
 import os
 import re
 
+
 class SectionNotFoundError(Exception):
     pass
+
 
 class ConfigFileWriter(object):
     SECTION_REGEX = re.compile(r'\[(?P<header>[^]]+)\]')
@@ -29,9 +32,12 @@ class ConfigFileWriter(object):
 
     def update_config(self, new_values, config_filename):
         """Update config file with new values.
+
         This method will update a section in a config file with
         new key value pairs.
+
         This method provides a few conveniences:
+
         * If the ``config_filename`` does not exist, it will
           be created.  Any parent directories will also be created
           if necessary.
@@ -39,14 +45,17 @@ class ConfigFileWriter(object):
         * Any existing lines that are specified by ``new_values``
           **will not be touched**.  This ensures that commented out
           values are left unaltered.
+
         :type new_values: dict
         :param new_values: The values to update.  There is a special
             key ``__section__``, that specifies what section in the INI
             file to update.  If this key is not present, then the
             ``default`` section will be updated with the new values.
+
         :type config_filename: str
         :param config_filename: The config filename where values will be
             written.
+
         """
         section_name = new_values.pop('__section__', 'default')
         if not os.path.isfile(config_filename):

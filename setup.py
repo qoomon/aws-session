@@ -1,5 +1,4 @@
 import setuptools
-import sys
 import os
 __directory__=os.path.dirname(os.path.realpath(__file__))
 os.chdir(__directory__)
@@ -10,7 +9,7 @@ def read_text(file_name):
 
 setuptools.setup(
     name='aws-session',
-    version='3.0.3',
+    version='4.0.0',
     author="Bengt Brodersen",
     author_email="me@qoomon.me",
     description="A CLI to generate and store session credentials in ~/.aws/credentials file, based on ~/.aws/config profiles",
@@ -33,12 +32,12 @@ setuptools.setup(
         "Intended Audience :: System Administrators"
     ],
     install_requires=[
-        'botocore>=1.14.17,<2'
+        'botocore>=1.15.48,<2'
     ],
     packages=setuptools.find_packages(),
     entry_points={
         'console_scripts': [
-            'aws-session = aws_session.cli:main',
+            'aws-session = aws_session.__main__:main',
         ]
     }
 )
