@@ -97,10 +97,20 @@ def handle_session_credentials(args):
         if session_role_arn:
             session_duration_seconds = session_duration_seconds or int(DEFAULT_ROLE_SESSION_DURATION.total_seconds())
             session_name = profile_properties.get('session_name') or datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-            session = source_session_sts_client.assume_role(
-                DurationSeconds=session_duration_seconds,
-                RoleArn=session_role_arn, 
-                RoleSessionName=session_name)
+            session_mfa_serial = profile_properties.get('session_mfa_serial')
+            if session_mfa_serial:
+                session_mfa_code = getpass(prompt=f"Enter MFA code for {session_mfa_serial}: ")
+                session = source_session_sts_client.assume_role(
+                    DurationSeconds=session_duration_seconds,
+                    RoleArn=session_role_arn, 
+                    RoleSessionName=session_name,
+                    SerialNumber=session_mfa_serial,
+                    TokenCode=session_mfa_code)
+            else:
+                session = source_session_sts_client.assume_role(
+                    DurationSeconds=session_duration_seconds,
+                    RoleArn=session_role_arn, 
+                    RoleSessionName=session_name)
         else: 
             session_duration_seconds = session_duration_seconds or int(DEFAULT_SESSION_DURATION.total_seconds())
             session_mfa_serial = profile_properties.get('session_mfa_serial')
