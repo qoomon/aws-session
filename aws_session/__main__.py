@@ -72,7 +72,7 @@ def handle_session_credentials(args):
     expiry_time = datetime.now().astimezone()
     expiry_time_value = profile_config.get("aws_session_expiry_time")
     if expiry_time_value and not expiry_time_value == "None":
-        expiry_time = datetime.strptime(expiry_time_value, "%Y-%m-%d %H:%M:%S%z")
+        expiry_time = datetime.strptime(expiry_time_value, "%Y-%m-%d %H:%M:%S").astimezone()
 
     expiry_duration = expiry_time - datetime.now().astimezone()
     if expiry_duration < SESSION_EXPIRATION_THRESHOLD or force_new:
@@ -82,16 +82,16 @@ def handle_session_credentials(args):
             raise Exception(f"Invalid Credentials Type: {type(session_credentials)}")
         # populate deferred credentials
         session_credentials.get_frozen_credentials()
+        
+        expiry_time = session_credentials._expiry_time.astimezone()
+        expiry_duration = expiry_time - datetime.now().astimezone()
 
         profile_update(AWS_CREDENTIALS_PATH, profile_name, {
             "aws_access_key_id": session_credentials.access_key,
             "aws_secret_access_key": session_credentials.secret_key,
             "aws_session_token": session_credentials.token,
-            "aws_session_expiry_time": session_credentials._expiry_time
+            "aws_session_expiry_time": expiry_time.strftime("%Y-%m-%d %H:%M:%S")
         })
-
-        expiry_time = session_credentials._expiry_time
-        expiry_duration = expiry_time - datetime.now().astimezone()
 
     print(f"Session is valid for {format_timedelta(expiry_duration)}, "
           f"until {expiry_time.astimezone().strftime('%Y-%m-%d %H:%M')}")
