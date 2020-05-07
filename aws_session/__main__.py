@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from configparser import ConfigParser
 from datetime import datetime, timedelta
 from os import path
+import re
 
 from botocore.credentials import RefreshableCredentials
 from botocore.exceptions import ProfileNotFound
@@ -12,8 +13,9 @@ from .configfilewriter import ConfigFileWriter
 # --- CONFIGURATION ------------------------------------------------------------
 
 SESSION_EXPIRATION_THRESHOLD = timedelta(minutes=5)
-AWS_CREDENTIALS_PATH = path.expanduser(Session().get_config_variable("credentials_file"))
 
+AWS_CONFIG_PATH = path.expanduser(Session().get_config_variable("config_file"))
+AWS_CREDENTIALS_PATH = path.expanduser(Session().get_config_variable("credentials_file"))
 
 # ------------------------------------------------------------------------------
 
@@ -53,7 +55,6 @@ usage:
 
 def handle_list_profiles(args):
     profile_map = Session().full_config["profiles"]
-    # TODO
     for profile_name, profile in profile_map.items():
         if not profile_name.endswith("-session"):
             print(profile_name)
@@ -61,16 +62,16 @@ def handle_list_profiles(args):
 
 def handle_session_credentials(args):
     force_new = args.force_new
-    profile_name = args.profile_name
+    profile_name = re.sub('-session$', '', args.profile_name)
     profile_config = Session().full_config["profiles"].get(profile_name)
     if not profile_config:
         raise ProfileNotFound(profile=profile_name)
-    if profile_config.get("aws_access_key_id") and profile_config.get("aws_secret_access_key") \
-            and not profile_config.get("aws_session_token"):
-        raise Exception(f"The config profile ({profile_name}) is a user profile")
+        
+    session_profile_name = f"{profile_name}-session"
+    session_profile_config = Session().full_config["profiles"].get(session_profile_name) or {}
 
     expiry_time = datetime.now().astimezone()
-    expiry_time_value = profile_config.get("aws_session_expiry_time")
+    expiry_time_value = session_profile_config.get("aws_session_expiry_time")
     if expiry_time_value and not expiry_time_value == "None":
         expiry_time = datetime.strptime(expiry_time_value, "%Y-%m-%d %H:%M:%S").astimezone()
 
@@ -80,21 +81,23 @@ def handle_session_credentials(args):
         session_credentials = session.get_credentials()
         if not isinstance(session_credentials, RefreshableCredentials):
             raise Exception(f"Invalid Credentials Type: {type(session_credentials)}")
+        
         # populate deferred credentials
         session_credentials.get_frozen_credentials()
-        
+    
         expiry_time = session_credentials._expiry_time.astimezone()
         expiry_duration = expiry_time - datetime.now().astimezone()
 
-        profile_update(AWS_CREDENTIALS_PATH, profile_name, {
+        profile_update(AWS_CREDENTIALS_PATH, session_profile_name, {
             "aws_access_key_id": session_credentials.access_key,
             "aws_secret_access_key": session_credentials.secret_key,
             "aws_session_token": session_credentials.token,
-            "aws_session_expiry_time": expiry_time.strftime("%Y-%m-%d %H:%M:%S")
+            "aws_session_expiry_time": expiry_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "region": profile_config.get("region")
         })
-
-    print(f"Session is valid for {format_timedelta(expiry_duration)}, "
-          f"until {expiry_time.astimezone().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Session profile: {session_profile_name}")
+    print(f"Expires in {format_timedelta(expiry_duration)}, "
+          f"at {expiry_time.astimezone().strftime('%Y-%m-%d %H:%M')}")
 
 
 def format_timedelta(timedelta):
