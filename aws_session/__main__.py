@@ -114,7 +114,7 @@ def get_session_credentials(profile_name, profile_config):
             access_key=session_credentials['AccessKeyId'],
             secret_key=session_credentials['SecretAccessKey'],
             token=session_credentials['SessionToken'],
-            expiry_time=session_credentials['Expiration']
+            expiry_time=session_credentials['Expiration'].astimezone()
         )        
 
 def get_session_token(session, DurationSeconds, SerialNumber):
