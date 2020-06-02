@@ -14,6 +14,11 @@ usage:
         
             --profile/-p <profile_name> : select profile ['default']
             --force/-f                  : force new session
+            
+        To create MFA user sessions just add `session_mfa_serial` to profile config in ~/.aws/config profiles
+        
+        [profile john]
+        session_mfa_serial = arn:aws:iam::0123456789:mfa/john
         
     list session profiles:
 
@@ -32,7 +37,7 @@ usage:
 `pip3 install --user -r requirements-dev.txt`
 
 ## Run
-`python3 -m aws_session`
+`python3 -m aws_session get`
 
 #### Create Package
 `python3 setup.py clean --all sdist bdist_wheel` 

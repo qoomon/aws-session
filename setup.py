@@ -9,10 +9,10 @@ def read_text(file_name):
 
 setuptools.setup(
     name='aws-session',
-    version='5.0.0',
+    version='5.1.0',
     author="Bengt Brodersen",
     author_email="me@qoomon.me",
-    description="A CLI to generate and store session credentials in ~/.aws/credentials file, based on ~/.aws/config profiles",
+    description="A CLI to generate session credentials based on ~/.aws/config profiles and store them as profile in ~/.aws/credentials file",
     long_description=read_text("README.md"),
     long_description_content_type="text/markdown",
     url="https://github.com/qoomon/aws-session",
