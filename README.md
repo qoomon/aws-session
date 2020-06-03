@@ -32,9 +32,10 @@ usage:
 ## Setup dev environment
 
 #### Install Dev Dependencies
-`pip3 install --user -r requirements.txt`
-
-`pip3 install --user -r requirements-dev.txt`
+```
+pip3 install --user -r requirements.txt
+pip3 install --user -r requirements-dev.txt
+```
 
 ## Run
 `python3 -m aws_session get`

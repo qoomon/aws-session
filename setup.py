@@ -9,7 +9,7 @@ def read_text(file_name):
 
 setuptools.setup(
     name='aws-session',
-    version='5.2.0',
+    version='5.2.1',
     author="Bengt Brodersen",
     author_email="me@qoomon.me",
     description="A CLI to generate session credentials based on ~/.aws/config profiles and store them as profile in ~/.aws/credentials file",
@@ -32,7 +32,7 @@ setuptools.setup(
         "Intended Audience :: System Administrators"
     ],
     install_requires=[
-        'botocore>=1.15.48,<2'
+        'botocore>=1.16.0,<2'
     ],
     packages=setuptools.find_packages(),
     entry_points={

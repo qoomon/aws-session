@@ -13,6 +13,7 @@ from .configfilewriter import ConfigFileWriter
 
 # --- CONFIGURATION ------------------------------------------------------------
 
+SESSION_PROFILE_SUFFIX = "+session"
 SESSION_EXPIRATION_THRESHOLD = timedelta(minutes=5)
 
 DEFAULT_SESSION_TOKEN_DURATION_SECONDS = 43200  # 12 hours
@@ -50,18 +51,18 @@ usage:
 def handle_list_profiles(args):
     profile_map = Session().full_config["profiles"]
     for profile_name, profile in profile_map.items():
-        if not profile_name.endswith("-session"):
+        if not profile_name.endswith(SESSION_PROFILE_SUFFIX):
             print(profile_name)
 
 
 def handle_get_session_credentials(args):
     force_new = args.force_new
-    profile_name = re.sub('-session$', '', args.profile_name)
+    profile_name = re.sub(f"{re.escape(SESSION_PROFILE_SUFFIX)}$", '', args.profile_name)
     profile_config = Session().full_config["profiles"].get(profile_name)
     if not profile_config:
         raise ProfileNotFound(profile=profile_name)
 
-    session_profile_name = f"{profile_name}-session"
+    session_profile_name = f"{profile_name}{SESSION_PROFILE_SUFFIX}"
     session_profile_config = Session().full_config["profiles"].get(session_profile_name) or {}
 
     session_expiry_time = datetime.now().astimezone()
