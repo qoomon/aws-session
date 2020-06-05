@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/aws-session)](https://pypi.org/project/aws-session/)
 
-A CLI to generate and store session credentials in `~/.aws/credentials` file, based on `~/.aws/config profiles`
+A CLI to generate and store session credentials in `~/.aws/credentials` file, based on `~/.aws/config` profiles
 
 ## Usage
 ```
