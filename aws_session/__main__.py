@@ -1,15 +1,14 @@
+import os
+from os import path
+import re
 from argparse import ArgumentParser
 from getpass import getpass
 from configparser import ConfigParser
 from datetime import datetime, timedelta
-from os import path
-import re
 
 from botocore.credentials import Credentials, RefreshableCredentials
 from botocore.exceptions import ProfileNotFound
 from botocore.session import Session
-
-from .configfilewriter import ConfigFileWriter
 
 # --- CONFIGURATION ------------------------------------------------------------
 
@@ -17,7 +16,7 @@ SESSION_PROFILE_SUFFIX = "+session"
 SESSION_EXPIRATION_THRESHOLD = timedelta(minutes=5)
 
 DEFAULT_SESSION_TOKEN_DURATION_SECONDS = 43200  # 12 hours
-AWS_CREDENTIALS_PATH = path.expanduser(Session().get_config_variable("credentials_file"))
+AWS_CREDENTIALS_PATH = path.expanduser(Session().get_config_variable('credentials_file'))
 
 # ------------------------------------------------------------------------------
 
@@ -49,7 +48,7 @@ usage:
 
 
 def handle_list_profiles(args):
-    profile_map = Session().full_config["profiles"]
+    profile_map = Session().full_config['profiles']
     for profile_name, profile in profile_map.items():
         if not profile_name.endswith(SESSION_PROFILE_SUFFIX):
             print(profile_name)
@@ -58,32 +57,41 @@ def handle_list_profiles(args):
 def handle_get_session_credentials(args):
     force_new = args.force_new
     profile_name = re.sub(f"{re.escape(SESSION_PROFILE_SUFFIX)}$", '', args.profile_name)
-    profile_config = Session().full_config["profiles"].get(profile_name)
+    profile_config = Session().full_config['profiles'].get(profile_name)
     if not profile_config:
         raise ProfileNotFound(profile=profile_name)
 
     session_profile_name = f"{profile_name}{SESSION_PROFILE_SUFFIX}"
-    session_profile_config = Session().full_config["profiles"].get(session_profile_name) or {}
+    session_profile_config = Session().full_config['profiles'].get(session_profile_name) or {}
 
     session_expiry_time = datetime.now().astimezone()
-    session_expiry_time_value = session_profile_config.get("aws_session_expiry_time")
-    if session_expiry_time_value and not session_expiry_time_value == "None":
-        session_expiry_time = datetime.strptime(session_expiry_time_value, "%Y-%m-%d %H:%M:%S").astimezone()
+    session_expiry_time_value = session_profile_config.get('aws_session_expiry_time')
+    if session_expiry_time_value:
+        session_expiry_time = datetime.strptime(session_expiry_time_value, '%Y-%m-%d %H:%M:%S').astimezone()
 
     session_expiry_duration = session_expiry_time - datetime.now().astimezone()
     if session_expiry_duration < SESSION_EXPIRATION_THRESHOLD or force_new:
         session_credentials = get_session_credentials(profile_name=profile_name, profile_config=profile_config)
         session_profile_credentials = {
-            "aws_access_key_id": session_credentials.access_key,
-            "aws_secret_access_key" :session_credentials.secret_key,
-            "aws_session_token": session_credentials.token,
-            "aws_session_expiry_time": session_credentials.expiry_time.strftime("%Y-%m-%d %H:%M:%S")
+            'aws_access_key_id': session_credentials.access_key,
+            'aws_secret_access_key' :session_credentials.secret_key,
+            'aws_session_token': session_credentials.token,
+            'aws_session_expiry_time': session_credentials.expiry_time.strftime('%Y-%m-%d %H:%M:%S')
         }
-        profile_update(AWS_CREDENTIALS_PATH, session_profile_name, {
+        session_profile_config = {
                 **session_profile_credentials, # place credentials at top of credential profile
                 **profile_config,
                 **session_profile_credentials  # ensure old credentials are replaced by new ones
-        })
+        }
+        # purge session profile config
+        for config_variable in ['session_mfa_serial',
+            'credential_source', 'source_profile', 'mfa_serial',
+            'role_arn', 'role_session_name', 'external_id',
+            'web_identity_token_file', 'credential_process','duration_seconds']:
+            if config_variable in session_profile_config:
+                del session_profile_config[config_variable]
+                
+        update_session_profile(AWS_CREDENTIALS_PATH, session_profile_name, session_profile_config)
         session_expiry_time = session_credentials.expiry_time
         session_expiry_duration = session_expiry_time - datetime.now().astimezone()
 
@@ -96,7 +104,6 @@ def get_session_credentials(profile_name, profile_config):
     profile_session = Session(profile=profile_name)
     profile_session_credentials = profile_session.get_credentials()
     if isinstance(profile_session_credentials, RefreshableCredentials):
-        print(f"Role session")
         # populate deferred credentials
         profile_session_credentials.get_frozen_credentials()
         return SessionCredentials(
@@ -105,7 +112,6 @@ def get_session_credentials(profile_name, profile_config):
             token=profile_session_credentials.token,
             expiry_time=profile_session_credentials._expiry_time.astimezone())
     else:
-        print(f"User session")
         session_duration_seconds = profile_config.get('session_duration_seconds') or DEFAULT_SESSION_TOKEN_DURATION_SECONDS
         session_mfa_serial = profile_config.get('session_mfa_serial')
         session_credentials = get_session_token(profile_session,
@@ -152,39 +158,76 @@ def format_timedelta(timedelta):
     return f"{total_seconds} seconds"
 
 
-def profile_update(config_path, profile_section, config):
+def update_session_profile(config_path, profile_name, config):
+    profile_section = f"[{profile_name}]"
     current_config = ConfigParser()
     current_config.read(config_path)
-    if current_config.sections() and profile_section not in current_config.sections():
-        with open(config_path, "a") as config_file:
-            config_file.write("\n")
+    
+    # remove old profile section
+    with open(config_path, 'r+') as config_file:
+        lines = config_file.readlines()
+        config_file.seek(0)
+        
+        profile_section_regex = re.compile(f"^{re.escape(profile_section)}")
 
-    ConfigFileWriter().update_config(config_filename=config_path, new_values={
-        **config,
-        "__section__": profile_section
-    })
-
+        keep = True
+        for line in lines:
+            if keep:
+                if profile_section_regex.match(line): # profile section start
+                    keep = False
+            elif line.startswith('['): # new section start
+                    keep = True
+                      
+            if keep:
+                config_file.write(line)
+            
+        config_file.truncate()
+            
+    # ensure empty line before appending new profile section
+    with open(config_path, 'rb+') as config_file:
+        config_file.seek(0, os.SEEK_END) 
+        char_count = config_file.tell()
+        if char_count == 0:
+            pass
+        elif char_count == 1:
+            config_file.seek(-1, os.SEEK_END) 
+            if config_file.read(1).decode() != '\n':
+                config_file.write('\n\n'.encode())
+        else:
+            config_file.seek(-2, os.SEEK_END) 
+            if config_file.read(2).decode() != '\n\n':
+                config_file.write('\n'.encode())
+                config_file.seek(-2, os.SEEK_END) 
+                if config_file.read(2).decode() != '\n\n':
+                    config_file.write('\n'.encode())  
+                            
+    # append new profile section
+    with open(config_path, 'a') as config_file:
+        config_file.write(f"{profile_section}\n")
+        for key, value in config.items():
+            config_file.write(f"{key} = {value}\n")
+            
 
 def main():
     parser = ArgumentParser(add_help=False)
 
-    parser_command = parser.add_subparsers(title="commands", dest="command")
+    parser_command = parser.add_subparsers(title='commands', dest='command')
     parser_command.required = True
 
-    parser_command_get = parser_command.add_parser("get", help="Get session credentials")
+    parser_command_get = parser_command.add_parser('get', help='Get session credentials')
     parser_command_get.set_defaults(func=handle_get_session_credentials)
-    parser_command_get.add_argument("-p", "--profile", dest="profile_name", default="default", help="Profile name")
-    parser_command_get.add_argument("-f", "--force", dest="force_new", action="store_true", help="Force new session")
+    parser_command_get.add_argument('-p', '--profile', dest='profile_name', default='default', help='Profile name')
+    parser_command_get.add_argument('-f', '--force', dest='force_new', action='store_true', help='Force new session')
 
-    parser_command_help = parser_command.add_parser("help", help="Print help")
+    parser_command_help = parser_command.add_parser('help', help='Print help')
     parser_command_help.set_defaults(func=handle_help)
 
-    parser_command_list = parser_command.add_parser("list", help="List profiles")
+    parser_command_list = parser_command.add_parser('list', help='List profiles')
     parser_command_list.set_defaults(func=handle_list_profiles)
 
     args = parser.parse_args()
     args.func(args)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
