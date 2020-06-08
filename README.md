@@ -6,8 +6,6 @@ A CLI to generate and store session credentials in `~/.aws/credentials` file, ba
 
 ## Usage
 ```
-usage: 
-
     get session credentials:
 
         aws-session get [--profile/-p <profile_name>]
@@ -19,10 +17,16 @@ usage:
         
         [profile john]
         session_mfa_serial = arn:aws:iam::0123456789:mfa/john
-        
+            
     list session profiles:
 
         aws-session list
+        
+    purge expired session profiles:
+
+        aws-session purge
+        
+            --force/-f                  : purge all session profiles
 
     print help
 

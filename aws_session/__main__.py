@@ -36,23 +36,22 @@ usage:
         
         [profile john]
         session_mfa_serial = arn:aws:iam::0123456789:mfa/john
-        
+            
     list session profiles:
 
         aws-session list
+        
+    purge expired session profiles:
+
+        aws-session purge
+        
+            --force/-f                  : purge all session profiles
 
     print help
 
         aws-session help
     """)
-
-
-def handle_list_profiles(args):
-    profile_map = Session().full_config['profiles']
-    for profile_name, profile in profile_map.items():
-        if not profile_name.endswith(SESSION_PROFILE_SUFFIX):
-            print(profile_name)
-
+    
 
 def handle_get_session_credentials(args):
     force_new = args.force_new
@@ -91,7 +90,7 @@ def handle_get_session_credentials(args):
             if config_variable in session_profile_config:
                 del session_profile_config[config_variable]
                 
-        update_session_profile(AWS_CREDENTIALS_PATH, session_profile_name, session_profile_config)
+        replace_session_profile(AWS_CREDENTIALS_PATH, session_profile_name, session_profile_config)
         session_expiry_time = session_credentials.expiry_time
         session_expiry_duration = session_expiry_time - datetime.now().astimezone()
 
@@ -99,6 +98,32 @@ def handle_get_session_credentials(args):
     print(f"Expires in {format_timedelta(session_expiry_duration)}, "
           f"at {session_expiry_time.astimezone().strftime('%Y-%m-%d %H:%M')}")
 
+
+def handle_list_profiles(args):
+    profile_map = Session().full_config['profiles']
+    for profile_name, profile in sorted(profile_map.items()):
+        print(profile_name)
+
+
+def handle_purge_session_credentials(args):
+    force_delete = args.force_delete
+    
+    profile_map = Session().full_config['profiles']
+    for profile_name, profile in profile_map.items():
+        if profile_name.endswith(SESSION_PROFILE_SUFFIX):
+            session_profile_name = profile_name
+            session_profile_config = profile
+
+            session_expiry_time = datetime.now().astimezone()
+            session_expiry_time_value = session_profile_config.get('aws_session_expiry_time')
+            if session_expiry_time_value:
+                session_expiry_time = datetime.strptime(session_expiry_time_value, '%Y-%m-%d %H:%M:%S').astimezone()
+
+            session_expiry_duration = session_expiry_time - datetime.now().astimezone()
+            if session_expiry_duration < SESSION_EXPIRATION_THRESHOLD or force_delete:
+                print(f"Delete session profile: {session_profile_name}")
+                delete_session_profile(AWS_CREDENTIALS_PATH, session_profile_name)
+                
 
 def get_session_credentials(profile_name, profile_config):
     profile_session = Session(profile=profile_name)
@@ -122,8 +147,8 @@ def get_session_credentials(profile_name, profile_config):
             secret_key=session_credentials['SecretAccessKey'],
             token=session_credentials['SessionToken'],
             expiry_time=session_credentials['Expiration'].astimezone())
-
-
+            
+                            
 def get_session_token(session, DurationSeconds, SerialNumber):
     sts_client = session.create_client('sts')
     if SerialNumber:
@@ -158,12 +183,9 @@ def format_timedelta(timedelta):
     return f"{total_seconds} seconds"
 
 
-def update_session_profile(config_path, profile_name, config):
+def delete_session_profile(config_path, profile_name):
     profile_section = f"[{profile_name}]"
-    current_config = ConfigParser()
-    current_config.read(config_path)
     
-    # remove old profile section
     with open(config_path, 'r+') as config_file:
         lines = config_file.readlines()
         config_file.seek(0)
@@ -182,6 +204,12 @@ def update_session_profile(config_path, profile_name, config):
                 config_file.write(line)
             
         config_file.truncate()
+        
+        
+def add_session_profile(config_path, profile_name, config):
+    profile_section = f"[{profile_name}]"
+    current_config = ConfigParser()
+    current_config.read(config_path)
             
     # ensure empty line before appending new profile section
     with open(config_path, 'rb+') as config_file:
@@ -207,20 +235,29 @@ def update_session_profile(config_path, profile_name, config):
         for key, value in config.items():
             config_file.write(f"{key} = {value}\n")
             
-
+            
+def replace_session_profile(config_path, profile_name, config):
+    delete_session_profile(config_path, profile_name)
+    add_session_profile(config_path, profile_name, config)
+            
+        
 def main():
     parser = ArgumentParser(add_help=False)
 
     parser_command = parser.add_subparsers(title='commands', dest='command')
     parser_command.required = True
+    
+    parser_command_help = parser_command.add_parser('help', help='Print help')
+    parser_command_help.set_defaults(func=handle_help)
 
     parser_command_get = parser_command.add_parser('get', help='Get session credentials')
     parser_command_get.set_defaults(func=handle_get_session_credentials)
     parser_command_get.add_argument('-p', '--profile', dest='profile_name', default='default', help='Profile name')
     parser_command_get.add_argument('-f', '--force', dest='force_new', action='store_true', help='Force new session')
-
-    parser_command_help = parser_command.add_parser('help', help='Print help')
-    parser_command_help.set_defaults(func=handle_help)
+    
+    parser_command_get = parser_command.add_parser('purge', help='Purge expired session profiles')
+    parser_command_get.set_defaults(func=handle_purge_session_credentials)
+    parser_command_get.add_argument('-f', '--force', dest='force_delete', action='store_true', help='Force delete all session profiles')
 
     parser_command_list = parser_command.add_parser('list', help='List profiles')
     parser_command_list.set_defaults(func=handle_list_profiles)
