@@ -12,7 +12,7 @@ from botocore.session import Session
 
 # --- CONFIGURATION ------------------------------------------------------------
 
-SESSION_PROFILE_SUFFIX = "+session"
+SESSION_PROFILE_SUFFIX = "--session"
 SESSION_EXPIRATION_THRESHOLD = timedelta(minutes=5)
 
 DEFAULT_SESSION_TOKEN_DURATION_SECONDS = 43200  # 12 hours
