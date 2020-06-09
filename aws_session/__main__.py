@@ -45,7 +45,7 @@ usage:
 
         aws-session purge
         
-            --force/-f                  : purge all session profiles
+            --force/-f                  : purge all session profiles regardles of expiration
 
     print help
 
