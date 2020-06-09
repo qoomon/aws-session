@@ -26,7 +26,7 @@ A CLI to generate and store session credentials in `~/.aws/credentials` file, ba
 
         aws-session purge
         
-            --force/-f                  : purge all session profiles
+            --force/-f                  : purge all session profiles regardless of expiration
 
     print help
 
