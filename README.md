@@ -4,6 +4,10 @@
 
 A CLI to generate and store session credentials in `~/.aws/credentials` file, based on `~/.aws/config` profiles
 
+## Install
+
+`pip3 install aws-session`
+
 ## Usage
 ```
     get session credentials:
