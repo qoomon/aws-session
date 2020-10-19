@@ -10,37 +10,36 @@ A CLI to generate and store session credentials in `~/.aws/credentials` file, ba
 
 ## Usage
 ```
-    get session credentials:
+get session credentials:
 
-        aws-session get [--profile/-p <profile_name>]
-        
-            --profile/-p <profile_name> : select profile ['default']
-            --force/-f                  : force new session
-            
-        To create MFA user sessions just add `session_mfa_serial` to profile config in ~/.aws/config profiles
-        
-        [profile john]
-        session_mfa_serial = arn:aws:iam::0123456789:mfa/john
-            
-    list session profiles:
+    aws-session get [--profile/-p <profile_name>]
 
-        aws-session list
-        
-    purge expired session profiles:
+        --profile/-p <profile_name> : select profile ['default']
+        --force/-f                  : force new session
 
-        aws-session purge
-        
-            --force/-f                  : purge all session profiles regardless of expiration
+    To create MFA user sessions just add `mfa_serial` to profile config in ~/.aws/config profiles
 
-    print help
+list session profiles:
 
-        aws-session help
+    aws-session list
+
+purge expired session profiles:
+
+    aws-session purge
+
+        --force/-f                  : purge all session profiles regardles of expiration
+
+print help
+
+    aws-session help
 ```
 
 ## Setup dev environment
 
 #### Install Dev Dependencies
 ```
+export PATH="${PATH}:/Users/${USER}/Library/Python/3.7/bin"
+export PYTHONPATH="${PYTHONPATH}:/Users/${USER}/Library/Python/3.7/bin"
 pip3 install --user -r requirements.txt
 pip3 install --user -r requirements-dev.txt
 ```
